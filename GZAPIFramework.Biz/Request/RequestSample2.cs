@@ -20,7 +20,7 @@ namespace GZAPIFramework.Biz.Request
             if (BodyData.Account != "garsonzhang")
             {
                 base.setError(-1, "用户名必须是：garsonzhang");
-                return false;
+                return false; 
             }
             return base.CustomerValidateBodyData(BodyData);
         }
