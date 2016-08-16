@@ -14,6 +14,7 @@ namespace GZAPIFramework.Biz.Config
         /// </summary>
         public static void InitConfig()
         {
+
             GZAPI.Core.BicycleAPIuration.Configure(Config =>
             {
                 Config.SetInfaceCodeList(new InterfaceCodeList());
