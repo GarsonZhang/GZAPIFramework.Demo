@@ -1,0 +1,172 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Logs</title>
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/bootstrap-theme.min.css" rel="stylesheet" />
+    <script src="~/Scripts/angular.min.js"></script>
+    <script src="~/Scripts/jquery-1.9.1.min.js"></script>
+    <script src="~/Scripts/jquery.signalR-2.2.1.min.js"></script>
+    <script src="~/signalr/hubs"></script>
+    <script>
+
+        function newGuid() {
+            var guid = "";
+            for (var i = 1; i <= 32; i++) {
+                var n = Math.floor(Math.random() * 16.0).toString(16);
+                guid += n;
+                if ((i == 8) || (i == 12) || (i == 16) || (i == 20))
+                    guid += "-";
+            }
+            return guid;
+        }
+
+
+        var app = angular.module('myApp', []);
+        app.controller('apilist', function ($scope, $http) {
+
+            $scope.apidata;
+            $http.get("/api/apilist")
+                .success(function (response) {
+                    $scope.apidata = response;
+                })
+
+ 
+
+            $scope.apiLogs = []
+            $scope.isStarted = true;
+            $scope.chat = $.connection.logListernerHub;
+            $scope.chat.client.sendMessage = function (icode, title, msg) {
+                $scope.apiLogs.splice(0, 0, { code: icode, title: title, msg: msg });
+                //$scope.apiLogs.push({ code: icode, title: title, msg: msg });
+                $scope.$apply();
+            };
+
+            $.connection.hub.start().done(function () {
+                $scope.isStarted = false;
+                $scope.$apply();
+            });
+
+            $scope.ControllerConnected = function () {
+                var guid = newGuid()
+
+                if ($scope.Account == undefined || $scope.Account.length == 0) {
+                    alert('监听账号不能为空！');
+                    return;
+                }
+
+                var i = ($scope.ListernerEmpty == undefined || $scope.ListernerEmpty == false) ? 0 : 1;
+                $scope.chat.server.controllerConnected($scope.Account, i, guid);
+                alert('监听成功！');
+            }
+            $scope.clear = function () {
+                $scope.apiLogs.splice(0, $scope.apiLogs.length);
+            };
+
+            //$scope.scroll_go = function () {
+            //    var _el = document.getElementById('logcontainer');
+            //    var _childEl = document.getElementById('body');
+
+
+            //    //检测元素内容变动
+            //    _childEl.addEventListener('DOMNodeInserted', function () {
+            //        _el.scrollTop = _childEl.offsetHeight;
+            //        console.log("_childEl.offsetHeight：" + _childEl.offsetHeight + "\r\n_el.scrollTop：" + _el.scrollTop);
+            //    }, false);
+            //};
+            //$scope.scroll_go();
+
+        })
+    </script>
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        .fillheight {
+            height: 100%;
+        }
+
+        .scroll_y {
+            overflow-y: scroll;
+        }
+    </style>
+</head>
+<body ng-app="myApp" ng-controller="apilist">
+
+    <div class="container-fluid fillheight">
+
+        <div class="row fillheight">
+            <div class="col-xs-12 col-sm-6 col-md-6 col-lg-4 fillheight scroll_y">
+                <div>
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>
+                                    接口号
+                                </th>
+                                <th>
+                                    描述
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="item in apidata" ng-click="showDetail(item)">
+                                <td>
+                                    {{item.Code}}
+                                </td>
+                                <td>
+                                    {{item.Description}}
+                                </td>
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="fillheight fillheight scroll_y" id="logcontainer">
+                <div class="form-inline ">
+                    <div class="form-group">
+                        <label>账号</label>
+                        <input type="text" ng-model="Account" class="form-control" placeholder="要监听的账号">
+                        <div class="checkbox">
+                            <label>
+                                <input ng-model="ListernerEmpty" type="checkbox"> 监听空
+                            </label>
+                        </div>
+
+                    </div>
+
+                    <button type="button" ng-disabled="isStarted" ng-click="ControllerConnected()" class="btn btn-default">监听</button>
+                    <button type="button" class="btn btn-default" ng-click="clear()">清除</button>
+
+                    <div class="form-group">
+                        <label>指定接口号</label>
+                        <input type="text" ng-model="searchCode" class="form-control" placeholder="接口号">
+
+                    </div>
+                </div>
+                <div class="container-fluid" id="body">
+                    <h3>调用历史</h3>
+                    <div class="row" ng-repeat="log in localDics= (apiLogs| filter:{code:searchCode})">
+                        <div class="col-md-12">
+                            <h4><span class="bg-primary">{{localDics.length-$index}}</span>{{log.title}}</h4>
+                            <p>{{log.msg}}</p>
+                        </div>
+                    </div>
+
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</body>
+</html>
